@@ -5,311 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>全球股市查询 - Global Stock Search</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            padding: 20px;
+            min-height: 100vh; padding: 20px;
         }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            padding: 40px 0;
-            color: #ffffff;
-        }
-
+        .container { max-width: 900px; margin: 0 auto; }
+        header { text-align: center; padding: 40px 0; color: #ffffff; }
         header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 2.5rem; margin-bottom: 10px;
             background: linear-gradient(90deg, #00d9ff, #00ff88);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-
-        header p {
-            color: #a0a0a0;
-            font-size: 1rem;
-        }
-
+        header p { color: #a0a0a0; font-size: 1rem; }
         .search-box {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1); border-radius: 20px; padding: 30px;
+            margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.1);
         }
-
-        .search-input-wrapper {
-            display: flex;
-            gap: 10px;
-        }
-
+        .search-input-wrapper { display: flex; gap: 10px; }
         .search-input-wrapper input {
-            flex: 1;
-            padding: 15px 20px;
-            font-size: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            outline: none;
-            transition: all 0.3s ease;
+            flex: 1; padding: 15px 20px; font-size: 16px;
+            border: 2px solid rgba(255,255,255,0.2); border-radius: 12px;
+            background: rgba(255,255,255,0.05); color: #fff; outline: none;
         }
-
-        .search-input-wrapper input:focus {
-            border-color: #00d9ff;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .search-input-wrapper input::placeholder {
-            color: #888888;
-        }
-
+        .search-input-wrapper input:focus { border-color: #00d9ff; }
+        .search-input-wrapper input::placeholder { color: #888; }
         .search-input-wrapper button {
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #00d9ff, #00ff88);
-            color: #1a1a2e;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 15px 30px; font-size: 16px; font-weight: 600; border: none;
+            border-radius: 12px; background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e; cursor: pointer;
         }
-
-        .search-input-wrapper button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
-        }
-
-        .search-input-wrapper button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .quick-search {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 15px;
-        }
-
+        .search-input-wrapper button:hover { transform: translateY(-2px); }
+        .search-input-wrapper button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .quick-search { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
         .quick-search button {
-            padding: 8px 16px;
-            font-size: 13px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #a0a0a0;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 8px 16px; font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+            background: rgba(255,255,255,0.05); color: #a0a0a0; cursor: pointer;
         }
-
-        .quick-search button:hover {
-            background: rgba(0, 217, 255, 0.2);
-            border-color: #00d9ff;
-            color: #ffffff;
-        }
-
+        .quick-search button:hover { background: rgba(0,217,255,0.2); border-color: #00d9ff; color: #fff; }
         .result-box {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: none;
+            background: rgba(255,255,255,0.1); border-radius: 20px; padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1); display: none;
         }
-
-        .result-box.show {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .stock-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .stock-info h2 {
-            color: #ffffff;
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-        }
-
-        .stock-info .symbol {
-            color: #00d9ff;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .stock-price {
-            text-align: right;
-        }
-
-        .stock-price .price {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .stock-price .change {
-            font-size: 1.2rem;
-            font-weight: 600;
-            padding: 5px 12px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 5px;
-        }
-
-        .stock-price .change.up {
-            color: #00ff88;
-            background: rgba(0, 255, 136, 0.1);
-        }
-
-        .stock-price .change.down {
-            color: #ff4757;
-            background: rgba(255, 71, 87, 0.1);
-        }
-
-        .stock-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .detail-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 12px;
-        }
-
-        .detail-item .label {
-            color: #888888;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-        }
-
-        .detail-item .value {
-            color: #ffffff;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #a0a0a0;
-            display: none;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
+        .result-box.show { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        .loading { text-align: center; padding: 40px; color: #a0a0a0; display: none; }
+        .loading.show { display: block; }
         .loading .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #00d9ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #00d9ff; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
+        @keyframes spin { to { transform: rotate(360deg); } }
         .error {
-            background: rgba(255, 71, 87, 0.1);
-            border: 1px solid rgba(255, 71, 87, 0.3);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            color: #ff4757;
-            display: none;
+            background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3);
+            border-radius: 12px; padding: 20px; text-align: center; color: #ff4757; display: none;
         }
-
-        .error.show {
-            display: block;
-        }
-
-        .market-status {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .market-badge {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .market-badge.open {
-            background: rgba(0, 255, 136, 0.2);
-            color: #00ff88;
-        }
-
-        .market-badge.closed {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
-        }
-
-        footer {
-            text-align: center;
-            padding: 40px 0;
-            color: #666666;
-            font-size: 0.85rem;
-        }
-
-        footer a {
-            color: #00d9ff;
-            text-decoration: none;
-        }
-
+        .error.show { display: block; }
+        .chart-container { width: 100%; height: 500px; border-radius: 12px; overflow: hidden; }
+        .stock-info { color: #fff; margin-bottom: 20px; }
+        .stock-info h3 { font-size: 1.5rem; margin-bottom: 5px; }
+        .stock-info .symbol { color: #00d9ff; font-size: 1rem; }
+        footer { text-align: center; padding: 40px 0; color: #666; font-size: 0.85rem; }
+        footer a { color: #00d9ff; text-decoration: none; }
         @media (max-width: 600px) {
-            header h1 {
-                font-size: 1.8rem;
-            }
-
-            .search-input-wrapper {
-                flex-direction: column;
-            }
-
-            .stock-header {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .stock-price {
-                text-align: left;
-            }
+            header h1 { font-size: 1.8rem; }
+            .search-input-wrapper { flex-direction: column; }
         }
     </style>
 </head>
@@ -322,12 +85,7 @@
 
         <div class="search-box">
             <div class="search-input-wrapper">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="输入股票代码或公司名称 (如：AAPL, 特斯拉，腾讯)"
-                    autocomplete="off"
-                >
+                <input type="text" id="searchInput" placeholder="输入股票代码 (如：AAPL, TSLA, 0700.HK)" autocomplete="off">
                 <button id="searchBtn" onclick="searchStock()">搜索</button>
             </div>
             <div class="quick-search">
@@ -346,70 +104,30 @@
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>正在查询股价数据...</p>
+            <p>正在加载实时数据...</p>
         </div>
 
         <div class="error" id="error"></div>
 
         <div class="result-box" id="resultBox">
-            <div class="market-status" id="marketStatus"></div>
-
-            <div class="stock-header">
-                <div class="stock-info">
-                    <h2 id="stockName">-</h2>
-                    <span class="symbol" id="stockSymbol">-</span>
-                </div>
-                <div class="stock-price">
-                    <div class="price" id="stockPrice">-</div>
-                    <div class="change" id="stockChange">-</div>
-                </div>
+            <div class="stock-info">
+                <h3 id="stockName">-</h3>
+                <span class="symbol" id="stockSymbol">-</span>
             </div>
-
-            <div class="stock-details" id="stockDetails">
-                <div class="detail-item">
-                    <div class="label">开盘价</div>
-                    <div class="value" id="openPrice">-</div>
-                </div>
-                <div class="detail-item">
-                    <div class="label">最高价</div>
-                    <div class="value" id="highPrice">-</div>
-                </div>
-                <div class="detail-item">
-                    <div class="label">最低价</div>
-                    <div class="value" id="lowPrice">-</div>
-                </div>
-                <div class="detail-item">
-                    <div class="label">成交量</div>
-                    <div class="value" id="volume">-</div>
-                </div>
-                <div class="detail-item">
-                    <div class="label">市值</div>
-                    <div class="value" id="marketCap">-</div>
-                </div>
-                <div class="detail-item">
-                    <div class="label">市盈率</div>
-                    <div class="value" id="peRatio">-</div>
-                </div>
-            </div>
+            <div class="chart-container" id="chartContainer"></div>
         </div>
 
         <footer>
-            <p>数据来源：TradingView · 实时数据</p>
-            <p>© 2026 全球股市查询 | Created for David Li</p>
+            <p>数据来源：TradingView · 实时行情</p>
+            <p>© 2026 全球股市查询 | <a href="https://github.com/davidlizhiwei/global-stock-search" target="_blank">GitHub</a></p>
         </footer>
     </div>
 
-    <!-- TradingView Widget Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
     <script>
-        let tradingViewWidget = null;
+        let widget = null;
 
-        // 支持回车搜索
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchStock();
-            }
+            if (e.key === 'Enter') searchStock();
         });
 
         function quickSearch(symbol) {
@@ -417,125 +135,91 @@
             searchStock();
         }
 
-        function searchStock() {
-            const query = document.getElementById('searchInput').value.trim().toUpperCase();
-            if (!query) {
-                showError('请输入股票代码或公司名称');
-                return;
+        function parseSymbol(query) {
+            query = query.toUpperCase().trim();
+            if (query.includes('.HK')) {
+                return { symbol: query.replace('.HK', ''), exchange: 'HKEX', name: '港股' };
+            } else if (query.startsWith('^')) {
+                const indices = { '^GSPC': 'SPX', '^DJI': 'DJI', '^IXIC': 'IXIC' };
+                return { symbol: indices[query] || query, exchange: 'INDEX', name: '指数' };
+            } else {
+                const nasdaq = ['AAPL','GOOGL','MSFT','TSLA','NVDA','AMZN','META','NFLX','INTC','AMD'];
+                return {
+                    symbol: query,
+                    exchange: nasdaq.includes(query) ? 'NASDAQ' : 'NYSE',
+                    name: '美股'
+                };
             }
+        }
 
-            showLoading(true);
-            hideError();
-            hideResult();
+        function searchStock() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) { showError('请输入股票代码'); return; }
 
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('resultBox').classList.remove('show');
+
+            const parsed = parseSymbol(query);
+            const fullSymbol = `${parsed.exchange}:${parsed.symbol}`;
+
+            // 清除旧图表
+            document.getElementById('chartContainer').innerHTML = '';
+
+            // 加载 TradingView 脚本
+            if (typeof TradingView === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://s3.tradingview.com/tv.js';
+                script.onload = () => createWidget(fullSymbol, parsed);
+                script.onerror = () => showError('TradingView 加载失败，请刷新页面重试');
+                document.head.appendChild(script);
+            } else {
+                createWidget(fullSymbol, parsed);
+            }
+        }
+
+        function createWidget(symbol, parsed) {
             try {
-                // 使用 TradingView 实时数据小部件
-                const container = document.createElement('div');
-                container.id = 'tradingview_chart';
-                container.style.cssText = 'width:100%;height:400px;';
-
-                // 清除旧的小部件
-                const oldWidget = document.getElementById('tradingview_chart');
-                if (oldWidget) {
-                    oldWidget.remove();
-                }
-
-                // 解析股票代码
-                let symbol = query;
-                let exchange = 'NASDAQ';
-
-                if (query.includes('.HK')) {
-                    exchange = 'HKEX';
-                    symbol = query.replace('.HK', '');
-                } else if (query.startsWith('^')) {
-                    exchange = 'INDEX';
-                    symbol = query;
-                } else if (['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'AMZN', 'META', 'NFLX'].includes(query)) {
-                    exchange = 'NASDAQ';
-                } else {
-                    exchange = 'NYSE';
-                }
-
-                const fullSymbol = `${exchange}:${symbol}`;
-
-                // 创建 TradingView 小部件
-                new TradingView.widget({
-                    "width": "100%",
-                    "height": 400,
-                    "symbol": fullSymbol,
+                widget = new TradingView.widget({
+                    "autosize": true,
+                    "symbol": symbol,
                     "interval": "D",
                     "timezone": "Asia/Shanghai",
                     "theme": "dark",
                     "style": "1",
                     "locale": "zh_CN",
-                    "toolbar_bg": "#f1f3f6",
+                    "toolbar_bg": "#1a1a2e",
                     "enable_publishing": false,
                     "allow_symbol_change": true,
-                    "container_id": "tradingview_chart",
+                    "container_id": "chartContainer",
                     "hide_side_toolbar": false,
                     "details": true,
                     "hotlist": true,
                     "calendar": true,
-                    "studies": [
-                        "RSI@tv-basicstudies",
-                        "MACD@tv-basicstudies"
-                    ]
+                    "studies": ["RSI@tv-basicstudies", "MACD@tv-basicstudies"]
                 });
 
-                // 等待小部件加载后获取数据
                 setTimeout(() => {
-                    const resultContainer = document.getElementById('tradingview_chart');
-                    if (resultContainer) {
-                        hideLoading();
-                        showResult();
-
-                        // 添加说明
-                        const infoDiv = document.createElement('div');
-                        infoDiv.style.cssText = 'margin-top:20px;padding:15px;background:rgba(0,217,255,0.1);border-radius:12px;color:#a0a0a0;font-size:13px;';
-                        infoDiv.innerHTML = `
-                            <p style="margin:0 0 10px 0;">📊 <strong>实时数据图表已加载</strong></p>
-                            <p style="margin:0;">当前显示：<strong>${fullSymbol}</strong> |
-                            TradingView 提供实时股价、K 线图、技术指标等完整数据</p>
-                        `;
-                        document.getElementById('resultBox').appendChild(infoDiv);
-                    }
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('searchBtn').disabled = false;
+                    document.getElementById('resultBox').classList.add('show');
+                    document.getElementById('stockName').textContent = `${parsed.symbol} (${parsed.name})`;
+                    document.getElementById('stockSymbol').textContent = `${parsed.exchange} · TradingView 实时数据`;
                 }, 2000);
 
-            } catch (error) {
-                showError('加载失败：' + error.message);
-                hideLoading();
+            } catch (e) {
+                showError('图表加载失败：' + e.message);
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('searchBtn').disabled = false;
             }
         }
 
-        function showLoading() {
-            document.getElementById('loading').className = 'loading show';
-            document.getElementById('searchBtn').disabled = true;
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').className = 'loading';
+        function showError(msg) {
+            document.getElementById('error').textContent = '❌ ' + msg;
+            document.getElementById('error').classList.add('show');
+            document.getElementById('loading').classList.remove('show');
             document.getElementById('searchBtn').disabled = false;
-        }
-
-        function showError(message) {
-            document.getElementById('error').textContent = '❌ ' + message;
-            document.getElementById('error').className = 'error show';
-        }
-
-        function hideError() {
-            document.getElementById('error').className = 'error';
-        }
-
-        function showResult() {
-            document.getElementById('resultBox').className = 'result-box show';
-        }
-
-        function hideResult() {
-            document.getElementById('resultBox').className = 'result-box';
-            const oldWidget = document.getElementById('tradingview_chart');
-            if (oldWidget) {
-                oldWidget.remove();
-            }
         }
     </script>
 </body>
