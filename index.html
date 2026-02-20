@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球股市查询 - Global Stock Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            color: #ffffff;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: #a0a0a0;
+            font-size: 1rem;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input-wrapper input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input-wrapper input:focus {
+            border-color: #00d9ff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-input-wrapper input::placeholder {
+            color: #888888;
+        }
+
+        .search-input-wrapper button {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-input-wrapper button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+        }
+
+        .search-input-wrapper button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .quick-search {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .quick-search button {
+            padding: 8px 16px;
+            font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #a0a0a0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-search button:hover {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: #00d9ff;
+            color: #ffffff;
+        }
+
+        .result-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stock-info h2 {
+            color: #ffffff;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .stock-info .symbol {
+            color: #00d9ff;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .stock-price {
+            text-align: right;
+        }
+
+        .stock-price .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .stock-price .change {
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .stock-price .change.up {
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .stock-price .change.down {
+            color: #ff4757;
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .stock-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .detail-item .label {
+            color: #888888;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .detail-item .value {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0a0a0;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #ff4757;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .market-status {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .market-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .market-badge.open {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .market-badge.closed {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #666666;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .search-input-wrapper {
+                flex-direction: column;
+            }
+
+            .stock-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .stock-price {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 全球股市查询</h1>
+            <p>Global Stock Search - 实时股价查询</p>
+        </header>
+
+        <div class="search-box">
+            <div class="search-input-wrapper">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="输入股票代码或公司名称 (如：AAPL, 特斯拉，腾讯)"
+                    autocomplete="off"
+                >
+                <button id="searchBtn" onclick="searchStock()">搜索</button>
+            </div>
+            <div class="quick-search">
+                <button onclick="quickSearch('AAPL')">🇺🇸 苹果</button>
+                <button onclick="quickSearch('GOOGL')">🇺🇸 谷歌</button>
+                <button onclick="quickSearch('MSFT')">🇺🇸 微软</button>
+                <button onclick="quickSearch('TSLA')">🇺🇸 特斯拉</button>
+                <button onclick="quickSearch('NVDA')">🇺🇸 英伟达</button>
+                <button onclick="quickSearch('0700.HK')">🇭🇰 腾讯</button>
+                <button onclick="quickSearch('9988.HK')">🇭🇰 阿里</button>
+                <button onclick="quickSearch('^GSPC')">标普 500</button>
+                <button onclick="quickSearch('^DJI')">道琼斯</button>
+                <button onclick="quickSearch('^IXIC')">纳斯达克</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在查询股价数据...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result-box" id="resultBox">
+            <div class="market-status" id="marketStatus"></div>
+
+            <div class="stock-header">
+                <div class="stock-info">
+                    <h2 id="stockName">-</h2>
+                    <span class="symbol" id="stockSymbol">-</span>
+                </div>
+                <div class="stock-price">
+                    <div class="price" id="stockPrice">-</div>
+                    <div class="change" id="stockChange">-</div>
+                </div>
+            </div>
+
+            <div class="stock-details" id="stockDetails">
+                <div class="detail-item">
+                    <div class="label">开盘价</div>
+                    <div class="value" id="openPrice">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">最高价</div>
+                    <div class="value" id="highPrice">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">最低价</div>
+                    <div class="value" id="lowPrice">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">成交量</div>
+                    <div class="value" id="volume">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">市值</div>
+                    <div class="value" id="marketCap">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">市盈率</div>
+                    <div class="value" id="peRatio">-</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>数据来源：Yahoo Finance · 数据延迟 15 分钟</p>
+            <p>© 2026 全球股市查询 | Created for David Li</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
+
+        // 支持回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStock();
+            }
+        });
+
+        function quickSearch(symbol) {
+            document.getElementById('searchInput').value = symbol;
+            searchStock();
+        }
+
+        async function searchStock() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                showError('请输入股票代码或公司名称');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideResult();
+
+            try {
+                // 使用 Yahoo Finance API
+                const response = await fetch(`${API_BASE}/${encodeURIComponent(query)}?interval=1d&range=1d`);
+
+                if (!response.ok) {
+                    throw new Error('未找到该股票，请检查代码或名称');
+                }
+
+                const data = await response.json();
+
+                if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                    throw new Error('未找到该股票，请检查代码或名称');
+                }
+
+                const result = data.chart.result[0];
+                const meta = result.meta;
+                const quote = result.indicators.quote[0];
+
+                displayStockData(meta, quote);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayStockData(meta, quote) {
+            const currentPrice = meta.regularMarketPrice || quote.close[quote.close.length - 1];
+            const previousClose = meta.chartPreviousClose || quote.close[0];
+            const change = currentPrice - previousClose;
+            const changePercent = (change / previousClose) * 100;
+
+            // 更新基本信息
+            document.getElementById('stockName').textContent = meta.symbol;
+            document.getElementById('stockSymbol').textContent = meta.exchangeName || meta.exchange;
+            document.getElementById('stockPrice').textContent = formatPrice(currentPrice, meta.currency);
+
+            const changeEl = document.getElementById('stockChange');
+            const changeSign = change >= 0 ? '+' : '';
+            changeEl.textContent = `${changeSign}${formatPrice(change, meta.currency)} (${changeSign}${changePercent.toFixed(2)}%)`;
+            changeEl.className = `change ${change >= 0 ? 'up' : 'down'}`;
+
+            // 更新详细数据
+            const open = quote.open[quote.open.length - 1] || meta.regularMarketOpen || '-';
+            const high = quote.high[quote.high.length - 1] || meta.regularMarketDayHigh || '-';
+            const low = quote.low[quote.low.length - 1] || meta.regularMarketDayLow || '-';
+            const volume = quote.volume[quote.volume.length - 1] || meta.regularMarketVolume || '-';
+
+            document.getElementById('openPrice').textContent = formatPrice(open, meta.currency);
+            document.getElementById('highPrice').textContent = formatPrice(high, meta.currency);
+            document.getElementById('lowPrice').textContent = formatPrice(low, meta.currency);
+            document.getElementById('volume').textContent = formatVolume(volume);
+            document.getElementById('marketCap').textContent = meta.marketCap ? formatMarketCap(meta.marketCap) : '-';
+            document.getElementById('peRatio').textContent = meta.trailingPE ? meta.trailingPE.toFixed(2) : '-';
+
+            // 市场状态
+            const isOpen = meta.exchangeTimezoneName && isMarketOpen(meta);
+            document.getElementById('marketStatus').innerHTML = `
+                <span class="market-badge ${isOpen ? 'open' : 'closed'}">
+                    ${isOpen ? '🟢 交易中' : '🔴 已休市'}
+                </span>
+                <span class="market-badge" style="background: rgba(255,255,255,0.1); color: #a0a0a0;">
+                    ${meta.exchangeName || meta.exchange} | ${meta.currency || 'USD'}
+                </span>
+            `;
+
+            showResult();
+        }
+
+        function formatPrice(price, currency = 'USD') {
+            if (price === '-' || price === null || price === undefined) return '-';
+            const currencies = {
+                'USD': '$',
+                'HKD': 'HK$',
+                'CNY': '¥',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+            const symbol = currencies[currency] || '$';
+            return `${symbol}${price.toFixed(2)}`;
+        }
+
+        function formatVolume(volume) {
+            if (volume === '-' || volume === null || volume === undefined) return '-';
+            if (volume >= 1e9) return `${(volume / 1e9).toFixed(2)}B`;
+            if (volume >= 1e6) return `${(volume / 1e6).toFixed(2)}M`;
+            if (volume >= 1e3) return `${(volume / 1e3).toFixed(2)}K`;
+            return volume.toString();
+        }
+
+        function formatMarketCap(cap) {
+            if (cap >= 1e12) return `${(cap / 1e12).toFixed(2)}T`;
+            if (cap >= 1e9) return `${(cap / 1e9).toFixed(2)}B`;
+            if (cap >= 1e6) return `${(cap / 1e6).toFixed(2)}M`;
+            return cap.toString();
+        }
+
+        function isMarketOpen(meta) {
+            // 简化的市场状态判断
+            const now = new Date();
+            const hour = now.getUTCHours();
+            const day = now.getUTCDay();
+
+            // 周末休市
+            if (day === 0 || day === 6) return false;
+
+            // 美股交易时间：美东时间 9:30-16:00 (UTC 14:30-21:00)
+            if (meta.exchangeName === 'NMS' || meta.exchangeName === 'NYQ') {
+                return hour >= 14 && hour < 21;
+            }
+
+            // 港股交易时间：香港时间 9:30-16:00 (UTC 1:30-8:00)
+            if (meta.exchangeName === 'HKG') {
+                return hour >= 1 && hour < 8;
+            }
+
+            return true;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').className = show ? 'loading show' : 'loading';
+            document.getElementById('searchBtn').disabled = show;
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = '❌ ' + message;
+            document.getElementById('error').className = 'error show';
+        }
+
+        function hideError() {
+            document.getElementById('error').className = 'error';
+        }
+
+        function showResult() {
+            document.getElementById('resultBox').className = 'result-box show';
+        }
+
+        function hideResult() {
+            document.getElementById('resultBox').className = 'result-box';
+        }
+    </script>
+</body>
+</html>
