@@ -394,15 +394,16 @@
         </div>
 
         <footer>
-            <p>数据来源：Yahoo Finance · 数据延迟 15 分钟</p>
+            <p>数据来源：TradingView · 实时数据</p>
             <p>© 2026 全球股市查询 | Created for David Li</p>
         </footer>
     </div>
 
+    <!-- TradingView Widget Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
     <script>
-        // 使用 Finnhub API - 支持 CORS 的免费股票数据 API
-        const FINNHUB_API_KEY = 'YOUR_API_KEY'; // 用户可以替换自己的 API key
-        const FINNHUB_BASE = 'https://finnhub.io/api/v1';
+        let tradingViewWidget = null;
 
         // 支持回车搜索
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -416,21 +417,7 @@
             searchStock();
         }
 
-        // 模拟股票数据（用于演示，实际使用时请替换为真实 API）
-        const mockStockData = {
-            'AAPL': { name: 'Apple Inc.', price: 225.77, change: 2.35, changePercent: 1.05, open: 223.50, high: 226.50, low: 222.80, volume: 52000000, marketCap: 3450000000000, pe: 35.2 },
-            'GOOGL': { name: 'Alphabet Inc.', price: 175.35, change: -1.25, changePercent: -0.71, open: 176.80, high: 178.20, low: 174.50, volume: 28000000, marketCap: 2180000000000, pe: 26.8 },
-            'MSFT': { name: 'Microsoft Corp.', price: 415.50, change: 5.80, changePercent: 1.42, open: 410.20, high: 417.00, low: 409.50, volume: 22000000, marketCap: 3090000000000, pe: 36.5 },
-            'TSLA': { name: 'Tesla Inc.', price: 248.50, change: -8.25, changePercent: -3.21, open: 255.00, high: 258.80, low: 246.20, volume: 95000000, marketCap: 790000000000, pe: 68.5 },
-            'NVDA': { name: 'NVIDIA Corp.', price: 138.07, change: 3.42, changePercent: 2.54, open: 135.20, high: 139.50, low: 134.80, volume: 310000000, marketCap: 3400000000000, pe: 65.2 },
-            '0700.HK': { name: 'Tencent Holdings', price: 478.60, change: 12.40, changePercent: 2.66, open: 468.00, high: 482.00, low: 465.20, volume: 18500000, marketCap: 4520000000000, pe: 22.3 },
-            '9988.HK': { name: 'Alibaba Group', price: 132.80, change: -2.60, changePercent: -1.92, open: 135.00, high: 136.50, low: 131.20, volume: 25000000, marketCap: 2680000000000, pe: 18.5 },
-            '^GSPC': { name: 'S&P 500', price: 6058.25, change: 15.75, changePercent: 0.26, open: 6045.00, high: 6065.50, low: 6038.20, volume: 0, marketCap: 0, pe: 0 },
-            '^DJI': { name: 'Dow Jones Index', price: 44050.35, change: 125.50, changePercent: 0.29, open: 43950.00, high: 44100.00, low: 43900.00, volume: 0, marketCap: 0, pe: 0 },
-            '^IXIC': { name: 'NASDAQ Index', price: 19456.80, change: -85.25, changePercent: -0.44, open: 19520.00, high: 19580.00, low: 19420.00, volume: 0, marketCap: 0, pe: 0 }
-        };
-
-        async function searchStock() {
+        function searchStock() {
             const query = document.getElementById('searchInput').value.trim().toUpperCase();
             if (!query) {
                 showError('请输入股票代码或公司名称');
@@ -442,150 +429,92 @@
             hideResult();
 
             try {
-                // 首先尝试使用模拟数据（确保应用可用）
-                if (mockStockData[query]) {
-                    const data = mockStockData[query];
-                    displayStockData({
-                        symbol: query,
-                        exchangeName: query.includes('HK') ? 'HKG' : (query.startsWith('^') ? 'IND' : 'NMS'),
-                        currency: query.includes('HK') ? 'HKD' : 'USD',
-                        marketCap: data.marketCap,
-                        trailingPE: data.pe
-                    }, {
-                        close: [data.price],
-                        open: [data.open],
-                        high: [data.high],
-                        low: [data.low],
-                        volume: [data.volume]
-                    }, data.change, data.changePercent);
-                    showLoading(false);
-                    return;
+                // 使用 TradingView 实时数据小部件
+                const container = document.createElement('div');
+                container.id = 'tradingview_chart';
+                container.style.cssText = 'width:100%;height:400px;';
+
+                // 清除旧的小部件
+                const oldWidget = document.getElementById('tradingview_chart');
+                if (oldWidget) {
+                    oldWidget.remove();
                 }
 
-                // 尝试使用 Finnhub API（需要用户自己的 API key）
-                // 免费获取：https://finnhub.io/register
-                if (FINNHUB_API_KEY !== 'YOUR_API_KEY') {
-                    const quoteResponse = await fetch(`${FINNHUB_BASE}/quote?symbol=${encodeURIComponent(query)}&token=${FINNHUB_API_KEY}`);
-                    const quote = await quoteResponse.json();
+                // 解析股票代码
+                let symbol = query;
+                let exchange = 'NASDAQ';
 
-                    if (quote.s === 'ok') {
-                        const profileResponse = await fetch(`${FINNHUB_BASE}/stock/profile2?symbol=${encodeURIComponent(query)}&token=${FINNHUB_API_KEY}`);
-                        const profile = await profileResponse.json();
+                if (query.includes('.HK')) {
+                    exchange = 'HKEX';
+                    symbol = query.replace('.HK', '');
+                } else if (query.startsWith('^')) {
+                    exchange = 'INDEX';
+                    symbol = query;
+                } else if (['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'AMZN', 'META', 'NFLX'].includes(query)) {
+                    exchange = 'NASDAQ';
+                } else {
+                    exchange = 'NYSE';
+                }
 
-                        displayStockData({
-                            symbol: query,
-                            exchangeName: profile.finnhubIndustry || 'US',
-                            currency: 'USD',
-                            marketCap: null,
-                            trailingPE: null
-                        }, {
-                            close: [quote.c],
-                            open: [quote.o],
-                            high: [quote.h],
-                            low: [quote.l],
-                            volume: [quote.v]
-                        }, quote.c - quote.pc, ((quote.c - quote.pc) / quote.pc) * 100);
-                        showLoading(false);
-                        return;
+                const fullSymbol = `${exchange}:${symbol}`;
+
+                // 创建 TradingView 小部件
+                new TradingView.widget({
+                    "width": "100%",
+                    "height": 400,
+                    "symbol": fullSymbol,
+                    "interval": "D",
+                    "timezone": "Asia/Shanghai",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "zh_CN",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "allow_symbol_change": true,
+                    "container_id": "tradingview_chart",
+                    "hide_side_toolbar": false,
+                    "details": true,
+                    "hotlist": true,
+                    "calendar": true,
+                    "studies": [
+                        "RSI@tv-basicstudies",
+                        "MACD@tv-basicstudies"
+                    ]
+                });
+
+                // 等待小部件加载后获取数据
+                setTimeout(() => {
+                    const resultContainer = document.getElementById('tradingview_chart');
+                    if (resultContainer) {
+                        hideLoading();
+                        showResult();
+
+                        // 添加说明
+                        const infoDiv = document.createElement('div');
+                        infoDiv.style.cssText = 'margin-top:20px;padding:15px;background:rgba(0,217,255,0.1);border-radius:12px;color:#a0a0a0;font-size:13px;';
+                        infoDiv.innerHTML = `
+                            <p style="margin:0 0 10px 0;">📊 <strong>实时数据图表已加载</strong></p>
+                            <p style="margin:0;">当前显示：<strong>${fullSymbol}</strong> |
+                            TradingView 提供实时股价、K 线图、技术指标等完整数据</p>
+                        `;
+                        document.getElementById('resultBox').appendChild(infoDiv);
                     }
-                }
+                }, 2000);
 
-                throw new Error('未找到该股票，请检查代码或名称。提示：演示模式支持 AAPL, GOOGL, MSFT, TSLA, NVDA, 0700.HK, 9988.HK, ^GSPC, ^DJI, ^IXIC');
             } catch (error) {
-                showError(error.message);
-            } finally {
-                showLoading(false);
+                showError('加载失败：' + error.message);
+                hideLoading();
             }
         }
 
-        function displayStockData(meta, quote, change, changePercent) {
-            const currentPrice = quote.close[0];
-
-            // 更新基本信息
-            document.getElementById('stockName').textContent = meta.symbol;
-            document.getElementById('stockSymbol').textContent = getExchangeName(meta.exchangeName);
-            document.getElementById('stockPrice').textContent = formatPrice(currentPrice, meta.currency);
-
-            const changeEl = document.getElementById('stockChange');
-            const changeSign = change >= 0 ? '+' : '';
-            changeEl.textContent = `${changeSign}${formatPrice(change, meta.currency)} (${changeSign}${changePercent.toFixed(2)}%)`;
-            changeEl.className = `change ${change >= 0 ? 'up' : 'down'}`;
-
-            // 更新详细数据
-            const open = quote.open[0] || '-';
-            const high = quote.high[0] || '-';
-            const low = quote.low[0] || '-';
-            const volume = quote.volume[0] || '-';
-
-            document.getElementById('openPrice').textContent = formatPrice(open, meta.currency);
-            document.getElementById('highPrice').textContent = formatPrice(high, meta.currency);
-            document.getElementById('lowPrice').textContent = formatPrice(low, meta.currency);
-            document.getElementById('volume').textContent = formatVolume(volume);
-            document.getElementById('marketCap').textContent = meta.marketCap ? formatMarketCap(meta.marketCap) : '-';
-            document.getElementById('peRatio').textContent = meta.trailingPE && meta.trailingPE > 0 ? meta.trailingPE.toFixed(2) : '-';
-
-            // 市场状态
-            const isOpen = isMarketOpenSimple(meta.exchangeName);
-            document.getElementById('marketStatus').innerHTML = `
-                <span class="market-badge ${isOpen ? 'open' : 'closed'}">
-                    ${isOpen ? '🟢 交易中' : '🔴 已休市'}
-                </span>
-                <span class="market-badge" style="background: rgba(255,255,255,0.1); color: #a0a0a0;">
-                    ${getExchangeName(meta.exchangeName)} | ${meta.currency || 'USD'}
-                </span>
-            `;
-
-            showResult();
+        function showLoading() {
+            document.getElementById('loading').className = 'loading show';
+            document.getElementById('searchBtn').disabled = true;
         }
 
-        function getExchangeName(exchange) {
-            if (exchange === 'HKG' || exchange === 'HK') return '香港交易所';
-            if (exchange === 'NMS' || exchange === 'NYQ' || exchange === 'US') return '纳斯达克/纽交所';
-            if (exchange === 'IND') return '指数';
-            return exchange || '美国股市';
-        }
-
-        function isMarketOpenSimple(exchange) {
-            const now = new Date();
-            const hour = now.getUTCHours();
-            const day = now.getUTCDay();
-            if (day === 0 || day === 6) return false;
-            if (exchange === 'HKG' || exchange === 'HK') return hour >= 1 && hour < 8;
-            return hour >= 14 && hour < 21;
-        }
-
-        function formatPrice(price, currency = 'USD') {
-            if (price === '-' || price === null || price === undefined) return '-';
-            const currencies = {
-                'USD': '$',
-                'HKD': 'HK$',
-                'CNY': '¥',
-                'EUR': '€',
-                'GBP': '£',
-                'JPY': '¥'
-            };
-            const symbol = currencies[currency] || '$';
-            return `${symbol}${price.toFixed(2)}`;
-        }
-
-        function formatVolume(volume) {
-            if (volume === '-' || volume === null || volume === undefined) return '-';
-            if (volume >= 1e9) return `${(volume / 1e9).toFixed(2)}B`;
-            if (volume >= 1e6) return `${(volume / 1e6).toFixed(2)}M`;
-            if (volume >= 1e3) return `${(volume / 1e3).toFixed(2)}K`;
-            return volume.toString();
-        }
-
-        function formatMarketCap(cap) {
-            if (cap >= 1e12) return `${(cap / 1e12).toFixed(2)}T`;
-            if (cap >= 1e9) return `${(cap / 1e9).toFixed(2)}B`;
-            if (cap >= 1e6) return `${(cap / 1e6).toFixed(2)}M`;
-            return cap.toString();
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').className = show ? 'loading show' : 'loading';
-            document.getElementById('searchBtn').disabled = show;
+        function hideLoading() {
+            document.getElementById('loading').className = 'loading';
+            document.getElementById('searchBtn').disabled = false;
         }
 
         function showError(message) {
@@ -603,6 +532,10 @@
 
         function hideResult() {
             document.getElementById('resultBox').className = 'result-box';
+            const oldWidget = document.getElementById('tradingview_chart');
+            if (oldWidget) {
+                oldWidget.remove();
+            }
         }
     </script>
 </body>
