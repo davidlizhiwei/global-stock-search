@@ -400,8 +400,12 @@
     </div>
 
     <script>
-        // 使用 CORS 代理解决跨域问题
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        // 使用 CORS 代理解决跨域问题 - 使用多个代理备选
+        const CORS_PROXIES = [
+            'https://corsproxy.io/?',
+            'https://api.allorigins.win/raw?url=',
+            'https://thingproxy.freeboard.io/fetch/'
+        ];
         const API_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
         // 支持回车搜索
@@ -427,31 +431,38 @@
             hideError();
             hideResult();
 
-            try {
-                // 使用 CORS 代理访问 Yahoo Finance API
-                const apiUrl = `${API_BASE}/${encodeURIComponent(query)}?interval=1d&range=1d`;
-                const response = await fetch(`${CORS_PROXY}${encodeURIComponent(apiUrl)}`);
+            const apiUrl = `${API_BASE}/${encodeURIComponent(query)}?interval=1d&range=1d`;
 
-                if (!response.ok) {
-                    throw new Error('未找到该股票，请检查代码或名称');
+            // 尝试多个 CORS 代理
+            for (const proxy of CORS_PROXIES) {
+                try {
+                    const response = await fetch(`${proxy}${encodeURIComponent(apiUrl)}`);
+
+                    if (!response.ok) {
+                        continue;
+                    }
+
+                    const data = await response.json();
+
+                    if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                        throw new Error('未找到该股票，请检查代码或名称');
+                    }
+
+                    const result = data.chart.result[0];
+                    const meta = result.meta;
+                    const quote = result.indicators.quote[0];
+
+                    displayStockData(meta, quote);
+                    showLoading(false);
+                    return;
+                } catch (error) {
+                    console.log(`Proxy ${proxy} failed:`, error.message);
+                    continue;
                 }
-
-                const data = await response.json();
-
-                if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
-                    throw new Error('未找到该股票，请检查代码或名称');
-                }
-
-                const result = data.chart.result[0];
-                const meta = result.meta;
-                const quote = result.indicators.quote[0];
-
-                displayStockData(meta, quote);
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                showLoading(false);
             }
+
+            showError('网络请求失败，请稍后重试');
+            showLoading(false);
         }
 
         function displayStockData(meta, quote) {
